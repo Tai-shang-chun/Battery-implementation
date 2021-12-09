@@ -1,0 +1,27 @@
+# create dimreduction2 model
+d = layers.Input(shape=(500, 4))
+conv1 = layers.Conv1D(128, 11, padding='same', activation=tf.nn.relu)(d)
+conv2 = layers.Conv1D(128, 11, padding='same', activation=tf.nn.relu)(conv1)
+conv2_1= layers.Conv1D(128, 5, padding='same', activation=tf.nn.relu)(conv2)
+conv2_2 = layers.Conv1D(128,5, padding='same', activation= tf.nn.relu)(conv2_1)
+maxpooling1d = layers.MaxPooling1D(pool_size=2, strides=2)
+concat1 = layers.Concatenate(axis=2)([layers.AveragePooling1D(pool_size=2, strides=2)(conv2_2), layers.AveragePooling1D(pool_size=2, strides=2)(conv2)])
+SpatialMaxPooling1D1 = layers.SpatialDropout1D(0.16)(concat1)
+conv3 = layers.Conv1D(128, 3, padding='same', activation= tf.nn.relu)(SpatialMaxPooling1D1)
+conv4 = layers.Conv1D(128, 3, padding='same', activation=tf.nn.relu)(conv3)
+conv4_1 = layers.Conv1D(128, 5, padding='same', activation=tf.nn.relu)(conv4)
+conv4_2 = layers.Conv1D(128, 5, padding='same', activation=tf.nn.relu)(conv4_1)
+concat2 = layers.Concatenate(axis=2)([layers.MaxPooling1D(pool_size=2, strides=2)(conv4_2), layers.MaxPooling1D(pool_size=2, strides=2)(conv4)])
+avgpooling1d = layers.AveragePooling1D(pool_size=2, strides=2)(concat2)
+globalavgpooling1d = layers.GlobalAveragePooling1D()(avgpooling1d)
+globalmaxpooling1d = layers.GlobalMaxPooling1D()(avgpooling1d)
+print('globalavgpooling1d shape',globalavgpooling1d.shape)
+print('globalmaxpooling1d shape',globalmaxpooling1d.shape)
+fc1 = layers.Dense(256)(layers.Add()([globalavgpooling1d, globalmaxpooling1d]))
+fc2 = layers.Dense(1)(fc1)
+model = Model(d,fc2)
+
+# save model and visualize
+path = './dimreduction2.h5'
+tf.keras.models.save_model(model,path)
+netron.start(path)
