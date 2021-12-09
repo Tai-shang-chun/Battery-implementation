@@ -1,0 +1,27 @@
+# create predictor2 model
+d = layers.Input(shape=(100, 8))
+conv1 = layers.Conv1D(128, 3, padding='same', activation=tf.nn.relu)(d)
+conv2 = layers.Conv1D(256, 3, padding='same', activation=tf.nn.relu)(conv1)
+conv3 = layers.Conv1D(512, 5, padding='same', activation=tf.nn.relu)(conv2)
+conv4 = layers.Conv1D(256, 13, padding='same', activation=tf.nn.relu)(conv3)
+spatialdropout1D = layers.SpatialDropout1D(0.16)(conv4)
+conv5 = layers.Conv1D(128, 5, padding='same', activation=tf.nn.relu)(spatialdropout1D)
+conv6_1 = layers.Conv1D(256, 11, padding='same', activation=tf.nn.relu)(conv5)
+conv6_2 = layers.Conv1D(512, 5, padding='same', activation=tf.nn.relu)(spatialdropout1D)
+conv7_1 = layers.Conv1D(256, 11, padding='same', activation=tf.nn.relu)(conv6_1)
+conv7_2 = layers.Conv1D(256, 5, padding='same', activation=tf.nn.relu)(conv6_2)
+conv8_1 = layers.Conv1D(100, 13, padding='same', activation=tf.nn.relu)(conv7_1)
+conv8_2 = layers.Conv1D(100, 7, padding='same', activation=tf.nn.relu)(conv7_2)
+globalavgpooling1d1_1 = layers.GlobalAveragePooling1D()(conv8_1)
+globalmaxpooling1d1_1 = layers.GlobalMaxPooling1D()(conv8_1)
+globalavgpooling1d1_2 = layers.GlobalAveragePooling1D()(conv8_2)
+globalmaxpooling1d1_2 = layers.GlobalMaxPooling1D()(conv8_2)
+add1_1 = layers.Add()([globalavgpooling1d1_1, globalmaxpooling1d1_1])
+add1_2 = layers.Add()([globalavgpooling1d1_2, globalmaxpooling1d1_2])
+concat = layers.Concatenate(axis=1)([add1_1, add1_2])
+model = Model(d, concat)
+
+# save model and visualize
+path = './predictor2.h5'
+tf.keras.models.save_model(model,path)
+netron.start(path)
